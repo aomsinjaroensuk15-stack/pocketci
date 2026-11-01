@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — activity_main.xml
+     --------------------------------------------------------------------------
+     The frame of the whole app: a toolbar on top, one container below.
+     Deliberately minimal — fragments get swapped into @id/container in M6.
+     ========================================================================== -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- MaterialToolbar, NOT the old android.widget.Toolbar and NOT
+         ActionBar. Differences that matter:
+           - MaterialToolbar understands Material theming (elevation,
+             title colors from colorPrimary, menu tinting).
+           - It's a plain View: we can place it ANYWHERE (inside a
+             LinearLayout here, inside a CoordinatorLayout later).
+         `setSupportActionBar(toolbar)` in MainActivity (Phase 48) connects
+         it to the menu system — that call is what makes the overflow
+         ⋮ menu from menu_main.xml (Phase 13) actually appear. -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- THE CONTAINER. A FrameLayout: one child at a time, stacked.
+         Why FrameLayout and not a placeholder TextView or nothing:
+           - "Nothing" = setContentView on an empty layout = white screen,
+             confusion about whether the app even launched.
+           - FrameLayout costs ~0 and lets M6 drop a RecyclerView fragment,
+             a settings fragment, or a "Shizuku not running" prompt into the
+             same slot without touching this file. -->
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- ^ THE WEIGHT TRICK, explained because students always ask:
+         LinearLayout divides height: toolbar takes wrap_content (what it
+         needs), container gets "everything left over". 0dp height +
+         weight=1 = "fill the remainder". If you instead wrote
+         height="match_parent" for the container, it would push BELOW the
+         screen edge (LinearLayout measures children in order, container
+         asked for the FULL height, toolbar pushed out).
+         0dp + weight is the ONLY correct "fill remaining space" in a
+         vertical LinearLayout. Memorize the pattern once, use it forever. -->
+
+</LinearLayout>
