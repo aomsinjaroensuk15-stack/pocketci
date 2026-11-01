@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — item_run.xml
+     --------------------------------------------------------------------------
+     ONE ROW of the runs list. Inflated once per visible run by RunsAdapter
+     (Phase 49). It gets recycled: this exact XML layout is re-bound hundreds
+     of times as you scroll — so everything here must be cheap and
+     predictable. No images yet, no nested weights, no depth.
+     ========================================================================== -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- ROW HEIGHT = wrap_content. This is THE most common RecyclerView
+         beginner bug: setting height="match_parent" on a row makes the
+         FIRST row fill the whole screen and every other row invisible
+         (they're scrolled below the fold, still "in" the list). Rule:
+         rows are wrap_content vertically, match_parent horizontally.
+
+         PADDING = 12dp all sides. One value, no per-side micro-tuning.
+         12dp is the Material list-item minimum comfortable density. Rows
+         touch otherwise; you get accidental "tap the wrong run" errors. -->
+
+    <!-- Line 1: repo name. textStyle="bold" = the row's primary text.
+         Material convention: one primary line, secondary lines regular.
+         We get the hierarchy for free instead of fighting with font
+         sizes. -->
+    <TextView
+        android:id="@+id/tvRepo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold" />
+
+    <!-- Line 2: commit sha (truncated to 8 chars in the adapter — the
+         layout just renders what it's given). textSize unset = theme
+         default. Explicit textSizes are a one-way ticket to a screen
+         that looks right on YOUR phone and wrong on a tablet. -->
+    <TextView
+        android:id="@+id/tvCommit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- Line 3: status. The adapter writes R.string.run_status_* values
+         here (Phase 8). Keep it a plain TextView: coloring by status
+         (green/red) is a Phase 49 adapter concern, done in Kotlin with
+         ContextCompat.getColor — NOT here in XML. Layout describes
+         shape; code describes state. -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- MISSING (deliberately): click feedback, dividers, swipe actions.
+         - Click feedback: RecyclerView rows need a ripple background to
+           feel tappable. We add android:background="?attr/selectableItemBackground"
+           in M6 polish — it's a one-liner, but it depends on the theme
+           being fully wired (Phase 9 is close, not complete).
+         - Dividers: ListView had them built in; RecyclerView makes you
+           add them. ItemDecoration > borders-in-XML. Also M6.
+         - Swipe: way later. Don't gold-plate the skeleton. -->
+
+</LinearLayout>
