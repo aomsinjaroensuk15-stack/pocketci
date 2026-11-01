@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — menu_main.xml
+     --------------------------------------------------------------------------
+     The toolbar overflow menu (the "⋮" on the right). Two things make menus
+     confusing for students, so I'll clear both:
+       1. The `app:` namespace — menus are (mostly) appcompat concepts, and
+          their attributes live in the appcompat namespace, NOT android:.
+          Without the xmlns:app declaration, app:showAsAction silently
+          does nothing.
+       2. showAsAction — decides icon-in-bar vs item-in-overflow.
+     ========================================================================== -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--
+         showAsAction cheat sheet (there are 4 values; you need 2):
+           always  — force into the bar as an icon. DANGEROUS: overflow
+                     menu still exists, and "always" items + many items =
+                     action bar explosion on small phones.
+           ifRoom  — bar if there's room, overflow otherwise. DEFAULT choice.
+           never   — always in overflow. For items users tap rarely.
+
+         We use "never" here deliberately: Settings is a one-tap-per-session
+         action. Giving it bar real estate would crowd out the run counter /
+         Shizuku banner we may add to the toolbar later.
+
+         Icon: none yet (text-only item). When M6 polish adds icons, the
+         rule is: bar items (ifRoom/always) NEED an icon + a content
+         description; overflow items should NOT have icons (they render
+         weirdly in the popup).
+    -->
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/title_settings"
+        app:showAsAction="never" />
+
+    <!-- FUTURE MENU ITEMS, so the shape is predictable when we add them
+         in later milestones:
+           <item android:id="@+id/action_run_now"
+                 android:title="Run now"
+                 android:icon="@drawable/ic_play"
+                 app:showAsAction="ifRoom" />     ← bar icon when room
+           <item android:id="@+id/action_clear_history"
+                 android:title="Clear history"
+                 app:showAsAction="never" />
+         Each needs: a handler in MainActivity.onOptionsItemSelected
+         (Phase 48 already has the when() branch for action_settings — the
+         others slot into that same when). -->
+
+    <!-- WHY A MENU FILE AT ALL (and not a button in the layout)?
+         Consistency: every Android user knows the ⋮ overflow. A custom
+         settings button in activity_main.xml would work — and then you'd
+         hand-roll accessibility, rotation handling, and the "where did
+         the button go on tablets" problem. The platform gives you all
+         of that for free via menu inflation. -->
+
+</menu>
