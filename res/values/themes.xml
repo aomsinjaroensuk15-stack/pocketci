@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — themes.xml
+     --------------------------------------------------------------------------
+     One theme for now. The parent choice here cascades through EVERY widget
+     in the app — pick wrong and you get the classic student bug: a white
+     toolbar with white text (readable: no), dialogs that look like 2014,
+     and dark mode that half-works.
+     ========================================================================== -->
+<resources>
+    <!-- =====================================================================
+         THE TRAP, EXPLAINED FIRST:
+         If you use a plain MaterialComponents theme WITHOUT .NoActionBar, the
+         system auto-inserts its own ActionBar at the top. Then Phase 48's
+         MainActivity ALSO sets a MaterialToolbar as its action bar via
+         setSupportActionBar() — TWO bars, one overlapping the other, and the
+         overflow menu opens from the wrong one. The fix is the parent name
+         here, not the activity code.
+         ===================================================================== -->
+    <style name="Theme.PocketCI" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- colorPrimary drives: toolbar background, active switch thumbs,
+             highlighted buttons. Holo green = "terminal green", on brand for
+             a CI tool. Later (M6 polish) we'll generate a real palette from
+             material-foundation.github.io/material-theme-builder and define
+             colorPrimaryContainer / colorSecondary etc. For the skeleton,
+             one deliberate color + system defaults is honest and works. -->
+        <item name="colorPrimary">@android:color/holo_green_dark</item>
+
+        <!-- WHY NOT MORE ATTRIBUTES?
+             Material3 themes are complete: without colorSecondary etc. they
+             fall back to sensible M3 defaults derived from colorPrimary.
+             The two things we will NOT inherit by default and must add when
+             we build Settings (M1): colorSurface for cards, and a statusBar
+             color scheme. Add them when there's a layout that needs them —
+             declaring 40 theme attributes "just in case" is how you end up
+             with a theme nobody understands. -->
+    </style>
+</resources>
