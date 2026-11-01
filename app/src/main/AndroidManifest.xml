@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — AndroidManifest.xml
+     --------------------------------------------------------------------------
+     The birth certificate of the app. Android reads this BEFORE any of our
+     code runs: what permissions we ask for, what components exist, what the
+     launcher sees. Three sections below:
+       1. <uses-permission>   — what we ASK the system for
+       2. <application>       — what we ARE
+       3. component notes     — the security-critical details per tag
+     ========================================================================== -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- =====================================================================
+         SECTION 1: PERMISSIONS
+         Ordered from "obviously needed" to "handle with care".
+         ===================================================================== -->
+
+    <!-- NETWORKING. Webhook receiver listens on :8080, GitHubApi calls
+         outbound to api.github.com. Without INTERNET the app is a very
+         pretty paperweight. ACCESS_NETWORK_STATE lets us check Wi-Fi vs
+         metered data before starting a build — we will NOT burn mobile data
+         downloading a 130 MB Gradle distribution (that check lives in
+         Phase 45 RunWorker). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- FOREGROUND SERVICE — the backbone of "phone as CI runner".
+         Since Android 9 (Pie), background services get killed within minutes.
+         A foreground service (with a persistent notification) is how a build
+         survives you switching to TikTok mid-compile. Two declarations
+         needed: the permission (this line) and the service attribute
+         (further down). The TYPE matters: Android 14+ REQUIRES declaring
+         foregroundServiceType. We use "dataSync" — the honest label for
+         "moving data between device and network, not playing music". -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- NOTIFICATIONS — required for the foreground service notification on
+         Android 13+. Runtime-permission too (POST_NOTIFICATIONS), so we
+         ALSO request it in code (Phase 48 MainActivity) and degrade
+         gracefully if denied: builds still run, you just can't see status. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- WAKE_LOCK — keeps the CPU alive while a build runs with screen off.
+         Without it, doze mode freezes our gradle mid-task. We acquire it
+         in CiService (Phase 46) only during an ACTIVE run, never idle:
+         battery manners matter when you're the CI. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- INSTALL PACKAGES — the visible half of our install story.
+         Shizuku gives us shell-identity power (Phase 22 does silent installs
+         via `pm install`), but declaring REQUEST_INSTALL_PACKAGES keeps a
+         manual fallback path: if Shizuku dies, the user can still tap-to-
+         install the built APK through the normal system prompt. Android 8+
+         requires this permission declaration even when a Shizuku-enabled app
+         could technically bypass it — declare it, be honest, move on. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- QUERY_ALL_PACKAGES — needed to see if Termux is installed.
+         TermuxBridge (Phase 41) fires an explicit Intent at
+         com.termux/.RunCommandService. On Android 11+, package visibility
+         filtering hides most apps from `getPackageInfo()` / queryIntent...
+         results unless you hold this permission or declare <queries>.
+         We CHOSE the broad permission because PocketCI legitimately wants
+         to verify its toolchain (Termux, Shizuku server app) exists, and
+         because Google Play's policy for this permission requires a
+         "core functionality" justification — ours is literally on the tin:
+         an app that builds and installs other apps.
+         SELF-HOSTED ALTERNATIVE if we ever publish on Play and get rejected:
+         replace this line with:
+             <queries>
+                 <package android:name="com.termux" />
+                 <package android:name="moe.shizuku.privileged.api" />
+             </queries>
+         which is narrower and policy-cleaner. Keep both options in mind. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <!-- =====================================================================
+         SECTION 2: THE APPLICATION
+         ===================================================================== -->
+    <application
+        android:name=".PocketCiApp"              <!-- our Application subclass;
+                                                    without this, PocketCiApp.onCreate
+                                                    never runs and db/settings are null -->
+        android:allowBackup="false"              <!-- CI runs + GitHub tokens must NOT
+                                                    ride along into Google Backup/cloud.
+                                                    A restore on a new device would
+                                                    resurrect old tokens. Hard no. -->
+        android:icon="@mipmap/ic_launcher"      <!-- ⚠️ KNOWN GAP: this resource does
+                                                    not exist in the skeleton. Add any
+                                                    PNG at res/mipmap-xxxhdpi/ic_launcher.png
+                                                    before building, or delete this
+                                                    attribute temporarily. Builds fail
+                                                    on missing launcher icons. -->
+        android:label="@string/app_name"
+        android:theme="@style/Theme.PocketCI">   <!-- defined Phase 9 -->
+
+        <!-- MAIN ACTIVITY — the launcher entry point.
+             android:exported="true" is MANDATORY here (Android 12+), and it
+             MUST be true: the launcher needs to start it. The intent-filter
+             below (MAIN + LAUNCHER) is what puts us in the app drawer. -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- RUN DETAIL — opened only from our own code (an Intent with an
+             explicit component). exported="false" = no other app can
+             start it, full stop. If you ever add a deep-link here, you must
+             flip exported + add the filter — and think about who else
+             could trigger it (a malicious app opening arbitrary run IDs?). -->
+        <activity
+            android:name=".ui.RunDetailActivity"
+            android:exported="false" />
+
+        <!-- SETTINGS — same story: internal navigation only. -->
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false" />
+
+        <!-- CI FOREGROUND SERVICE — where the actual builds execute.
+             exported="false" is the whole point: CiService holds the
+             WakeLock and runs the pipeline; any other app starting it
+             could trigger builds on OUR GitHub quota with OUR token.
+             The foregroundServiceType="dataSync" attribute pairs with the
+             FOREGROUND_SERVICE_DATA_SYNC permission above; Android 14
+             refuses to start the service without the matching pair. -->
+        <service
+            android:name=".worker.CiService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+    </application>
+
+    <!-- =====================================================================
+         SECTION 3: WHAT'S DELIBERATELY ABSENT
+         =====================================================================
+         - No <receiver>: the webhook path is an embedded HTTP server, not
+           push. We may add a BOOT_COMPLETED receiver in M3 so queued runs
+           resume after reboot — needs RECEIVE_BOOT_COMPLETED permission
+           and an exported="false" receiver.
+         - No <provider>: Room doesn't need one. Shizuku's provider comes
+           from the Shizuku library's own merged manifest.
+         - No android:usesCleartextTraffic="true": we only talk TLS
+           (github.com, api.github.com). Local webhook is HTTP by design but
+           that's inbound, not affected by this flag.
+         ===================================================================== -->
+</manifest>
