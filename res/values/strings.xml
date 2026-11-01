@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — strings.xml (default, English)
+     --------------------------------------------------------------------------
+     THE RULE of this file: user-visible text lives HERE, never hardcoded in
+     Kotlin. Why, beyond good manners:
+       1. Thai-English speaker → you'll want values-th/ someday. Strings in
+          XML = translation later is pure copy-paste. Strings in code =
+          grep-and-pray.
+       2. The same string appears in notifications AND the UI; one source of
+          truth beats two typos.
+     Naming convention used below: run_status_* for enum-ish states,
+     shizuku_* for the banner states, title_* for navigation labels.
+     ========================================================================== -->
+<resources>
+    <!-- App name. Also used by the manifest (Phase 7) via @string/app_name.
+         Kept ASCII-ish: launcher fonts render emoji inconsistently. -->
+    <string name="app_name">PocketCI</string>
+
+    <!-- ============ NAVIGATION / UI LABELS ============ -->
+    <string name="title_runs">Runs</string>
+    <string name="title_settings">Settings</string>
+
+    <!-- ============ SHIZUKU BANNER STATES ============ -->
+    <!-- The toolbar subtitle flips between these three. ShizukuViewModel
+         (Phase 47) is the single source of truth for the STATE; these
+         strings are just its human rendering. -->
+    <string name="shizuku_check">Checking Shizuku…</string>
+    <string name="shizuku_ok">Shizuku ready ✅</string>
+    <!-- The 😤 is deliberate brand voice — this app is allowed exactly one
+         playful string and it's the error path. Everywhere else stays
+         boringly clear, because CI failure messages get read at 2 AM. -->
+    <string name="shizuku_missing">Shizuku not running 😤 start it first!</string>
+
+    <!-- ============ RUN STATUSES ============ -->
+    <!-- These five map 1:1 to the RunEntity.status column (Phase 24). If you
+         ever add a status (e.g. "cancelled"), add it in THREE places:
+         the DB column comment, here, and the UI mapping in RunsAdapter
+         (Phase 49). -->
+    <string name="run_status_queued">Queued</string>
+    <string name="run_status_running">Running…</string>
+    <string name="run_status_success">Success ✅</string>
+    <string name="run_status_failed">Failed ❌</string>
+
+    <!-- Note: "cancelled" deliberately omitted — WorkManager cancellation in
+         v1 just fails the run. Honest state machine > aspirational one. -->
+</resources>
