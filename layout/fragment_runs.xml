@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==========================================================================
+     PocketCI — fragment_runs.xml
+     --------------------------------------------------------------------------
+     The list screen: run history (RecyclerView) + an empty state.
+     Two Views, one FrameLayout — the classic list pattern, done right.
+     NOTE: RunDetailActivity (Phase 50) ALSO inflates this layout as a
+     skeleton placeholder. That reuse is temporary and flagged there;
+     the layout itself is list-shaped.
+     ========================================================================== -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- THE LIST. RecyclerView, never ListView — the reasons every modern
+         Android tutorial repeats, condensed to the two that matter here:
+           1. View recycling: 10,000 runs in history = ~15 View objects
+              alive, not 10,000. ListView recycles too, but RecyclerView's
+              adapter contract FORCES you to write it correctly.
+           2. LayoutManager: RecyclerView doesn't care HOW items are laid
+              out (vertical list, grid, staggered) — swap one line later
+              without touching the adapter.
+
+         NO layoutManager attribute here: RunsAdapter (Phase 49) + the
+         hosting code set it (LinearLayoutManager). Setting it in XML is
+         fine too; we set it in code because RunDetailActivity's reuse of
+         this layout may want a different manager someday. -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRuns"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- THE EMPTY STATE. Sits ON TOP of the RecyclerView (FrameLayout
+         stacks children; later children draw above earlier ones).
+         GONE by default: it takes zero space and draws nothing.
+         Visibility flipping happens in code:
+             tvEmpty.visibility = if (list.isEmpty()) VISIBLE else GONE
+
+         WHY A SEPARATE VIEW (and not "set a message row as item #1"):
+           - Adapter data stays PURE — no fake RunEntity pretending to be
+             a message; every adapter row is a real run.
+           - No off-by-one bugs in click handling (tap on row 1 = run 1,
+             not "oops that's the header").
+           - Works with any future LayoutManager for free.
+
+         WHY layout_gravity="center" inside FrameLayout: gravity is how
+         FrameLayout positions children. Center = dead center of the
+         screen regardless of screen size. The alternative — centering
+         via padding math — breaks the moment a user rotates the phone.
+
+         NOTE: hardcoded text here is the ONE allowed exception (it's a
+         placeholder state, and @string/app_name-style indirection for a
+         debug string would add noise). M6 will move it to strings.xml
+         properly when the real copy lands. -->
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="No runs yet — push something!"
+        android:visibility="gone" />
+
+</FrameLayout>
